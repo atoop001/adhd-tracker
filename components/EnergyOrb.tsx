@@ -8,7 +8,12 @@ export type EnergyLevel = 1 | 2 | 3 | 4 | 5;
 export interface EnergyOrbProps {
   level: EnergyLevel;
   selected: boolean;
+  /** Parent sets this on non-selected orbs whenever any orb is selected.
+   *  Dims to 0.45 opacity but the orb STAYS pressable so users can change
+   *  their selection. */
+  dimmed?: boolean;
   onPress: () => void;
+  /** Not pressable. Also renders dimmed, but do not use this for dimming alone. */
   disabled?: boolean;
   reduceMotion?: boolean;
 }
@@ -35,14 +40,16 @@ const ORB_SIZE = 56;
 const SELECTED_SCALE = 1.15;
 const DIMMED_OPACITY = 0.45;
 
-export default function EnergyOrb({ level, selected, onPress, disabled, reduceMotion }: EnergyOrbProps) {
+export default function EnergyOrb({ level, selected, dimmed, onPress, disabled, reduceMotion }: EnergyOrbProps) {
   const tint = ORB_TINTS[level];
   const { emoji, label } = ORB_META[level];
 
+  // Precedence: selected orbs are never dimmed; `dimmed` dims but stays pressable;
+  // `disabled` also dims and additionally blocks presses.
+  const isDim = !selected && (dimmed || disabled);
+
   const scale = useSharedValue(selected ? SELECTED_SCALE : 1);
-  // Non-selected orbs dim to 0.45 only when the group has a selection — the parent
-  // signals this by setting `disabled` on the orbs that were not picked.
-  const opacity = useSharedValue(disabled ? DIMMED_OPACITY : 1);
+  const opacity = useSharedValue(isDim ? DIMMED_OPACITY : 1);
 
   useEffect(() => {
     const target = selected ? SELECTED_SCALE : 1;
@@ -50,9 +57,9 @@ export default function EnergyOrb({ level, selected, onPress, disabled, reduceMo
   }, [selected, reduceMotion, scale]);
 
   useEffect(() => {
-    const target = disabled ? DIMMED_OPACITY : 1;
+    const target = isDim ? DIMMED_OPACITY : 1;
     opacity.value = reduceMotion ? target : withSpring(target);
-  }, [disabled, reduceMotion, opacity]);
+  }, [isDim, reduceMotion, opacity]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
