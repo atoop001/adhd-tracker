@@ -158,9 +158,33 @@ lifetime_drops must never decrease. Bucket row is singleton id=1 (test-utils sch
 - addDrops: tierAdvanced true when crossing 100, 300, 600, 1100
 - addDrops: lifetime_drops never decreases under any input (e.g. negative/zero duration, mood null)
 
-Note: `__tests__/flux-test-utils.ts` createTestDb must already contain the bucket table —
-verify by reading it; if its schema lacks the bucket table, STOP and report
-NEEDS_CONTEXT (do not modify the frozen file).
+Note: the frozen `__tests__/flux-test-utils.ts` fixture predates the bucket mechanic and
+does NOT contain the bucket table. Do not modify it. Instead create a small additional
+helper `__tests__/flux-bucket-fixture.ts`:
+
+```ts
+import type { SQLiteDatabase } from 'expo-sqlite';
+
+/** The frozen test fixture predates the bucket mechanic; layer the bucket
+ *  table (matching lib/flux-db.ts exactly) onto a createTestDb() database. */
+export async function ensureBucketTable(db: SQLiteDatabase): Promise<void> {
+  await db.execAsync(`
+    CREATE TABLE IF NOT EXISTS bucket (
+      id                INTEGER PRIMARY KEY DEFAULT 1,
+      lifetime_drops    INTEGER NOT NULL DEFAULT 0,
+      current_tier      INTEGER NOT NULL DEFAULT 1,
+      total_workouts    INTEGER NOT NULL DEFAULT 0,
+      last_workout_date DATE,
+      updated_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    INSERT OR IGNORE INTO bucket (id) VALUES (1);
+  `);
+}
+```
+
+The DDL must match `lib/flux-db.ts` lines 57–64 exactly. Bucket tests call
+`ensureBucketTable(db)` in their setup after `createTestDb()`. (Task 3 reuses this
+helper for the workout-service tests.)
 
 Gate: tsc clean; new suite green; pattern-engine suite untouched.
 Commit: "Layer 1: bucket service + tests".
@@ -194,7 +218,10 @@ In `__tests__/flux-workout-service.test.ts`:
 - Keep all other existing tests (check-in upsert, tag promotion, quick access tags, etc.).
 
 Do NOT modify `__tests__/flux-test-utils.ts` (frozen) even though it still creates a
-streaks table — harmless leftover.
+streaks table — harmless leftover. The workout-service tests need the bucket table now
+(logWorkoutWithTags calls addDrops): call `ensureBucketTable(db)` from
+`__tests__/flux-bucket-fixture.ts` (created in Task 2) in the suite's setup after
+`createTestDb()`.
 
 Gate: tsc clean; ENTIRE suite green from this task forward.
 Commit: "Layer 1: workout service uses bucket, streak system removed".
