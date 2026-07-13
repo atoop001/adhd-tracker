@@ -99,3 +99,49 @@ export interface PatternResult<T = unknown> {
   isStale: boolean;
   validUntil: string | null;
 }
+
+// ---- Bucket mechanic ----
+
+export interface BucketState {
+  lifetimeDrops: number;
+  currentTier: number;
+  totalWorkouts: number;
+  lastWorkoutDate: string | null;
+}
+
+export interface TierInfo {
+  tier: number;
+  name: 'Pail' | 'Bucket' | 'Barrel' | 'Trough' | 'Reservoir';
+  fillPct: number;
+  dropsToNext: number | null;
+  tierStart: number;
+}
+
+export interface DropResult {
+  dropsEarned: number;
+  newTotal: number;
+  tierAdvanced: boolean;
+  newTier?: TierInfo;
+}
+
+// ---- Body metrics ----
+
+export interface BodyLog {
+  id: number;
+  date: string;
+  weight: number | null;
+  waistCm: number | null;
+  chestCm: number | null;
+  hipsCm: number | null;
+  armsCm: number | null;
+  notes: string | null;
+  createdAt: string;
+}
+
+export interface CalorieLog {
+  id: number;
+  date: string;
+  totalCalories: number;
+  notes: string | null;
+  createdAt: string;
+}
