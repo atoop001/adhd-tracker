@@ -7,14 +7,14 @@
 
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { createTestDb, daysAgo, weekdayLabel, seedTag, seedWorkout, tagWorkout } from './flux-test-utils';
-import { getPattern, invalidatePatternCache } from '../flux-pattern-engine';
-import { logCheckIn } from '../flux-workout-service';
+import { getPattern, invalidatePatternCache } from '../lib/flux-pattern-engine';
+import { logCheckIn } from '../lib/flux-workout-service';
 import type {
   EnergyRhythmResult,
   TagMoodCorrelationRow,
   BurnoutPrecursorResult,
   HydrationInsightResult,
-} from '../flux-types';
+} from '../lib/flux-types';
 
 describe('flux-pattern-engine', () => {
   let db: SQLiteDatabase;

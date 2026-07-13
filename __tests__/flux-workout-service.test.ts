@@ -13,7 +13,7 @@ import {
   evaluateStreakOnAppOpen,
   getOrCreateTag,
   getQuickAccessTags,
-} from '../flux-workout-service';
+} from '../lib/flux-workout-service';
 
 describe('flux-workout-service', () => {
   let db: SQLiteDatabase;
