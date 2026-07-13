@@ -1,16 +1,15 @@
 // __tests__/flux-workout-service.test.ts
 //
-// Covers the write path: check-in logging, streak forgiveness (the core
-// retention mechanic), tag promotion, and the logWorkoutWithTags
-// orchestration function.
+// Covers the write path: check-in logging, tag promotion, and the
+// logWorkoutWithTags orchestration function (workout insert, tag
+// linking, bucket drops, and cache invalidation).
 
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { createTestDb, daysAgo } from './flux-test-utils';
+import { ensureBucketTable } from './flux-bucket-fixture';
 import {
   logCheckIn,
   logWorkoutWithTags,
-  getStreakState,
-  evaluateStreakOnAppOpen,
   getOrCreateTag,
   getQuickAccessTags,
 } from '../lib/flux-workout-service';
@@ -18,8 +17,9 @@ import {
 describe('flux-workout-service', () => {
   let db: SQLiteDatabase;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     db = createTestDb();
+    await ensureBucketTable(db);
   });
 
   describe('logCheckIn', () => {
@@ -49,79 +49,6 @@ describe('flux-workout-service', () => {
         `SELECT is_stale FROM patterns_cache WHERE pattern_type = 'day_energy_rhythm'`
       );
       expect(cache.is_stale).toBe(1);
-    });
-  });
-
-  describe('streak forgiveness', () => {
-    it('starts a streak at 1 on the first logged workout', async () => {
-      await logWorkoutWithTags(db, { date: daysAgo(0), activityType: 'walk' }, []);
-      const streak = await getStreakState(db);
-      expect(streak.currentStreak).toBe(1);
-      expect(streak.lastActiveDate).toBe(daysAgo(0));
-    });
-
-    it('does not double-count a second workout logged the same day', async () => {
-      await logWorkoutWithTags(db, { date: daysAgo(0), activityType: 'walk' }, []);
-      await logWorkoutWithTags(db, { date: daysAgo(0), activityType: 'lift' }, []);
-      const streak = await getStreakState(db);
-      expect(streak.currentStreak).toBe(1);
-      expect(streak.totalWorkouts).toBe(2);
-    });
-
-    it('increments the streak on consecutive active days', async () => {
-      await logWorkoutWithTags(db, { date: daysAgo(1), activityType: 'walk' }, []);
-      await logWorkoutWithTags(db, { date: daysAgo(0), activityType: 'walk' }, []);
-      const streak = await getStreakState(db);
-      expect(streak.currentStreak).toBe(2);
-      expect(streak.longestStreak).toBe(2);
-    });
-
-    it('spends a banked rest day to preserve the streak across a missed day, instead of resetting it', async () => {
-      await logWorkoutWithTags(db, { date: daysAgo(2), activityType: 'walk' }, []);
-      await db.runAsync(`UPDATE streaks SET rest_days_banked = 1 WHERE id = 1`);
-
-      // App opens today, having missed yesterday — a single missed day.
-      await evaluateStreakOnAppOpen(db, daysAgo(0));
-
-      const streak = await getStreakState(db);
-      expect(streak.currentStreak).toBe(1); // preserved, not reset
-      expect(streak.restDaysBanked).toBe(0); // the banked day was spent
-    });
-
-    it('resets the streak when missed days exceed what is banked', async () => {
-      await logWorkoutWithTags(db, { date: daysAgo(5), activityType: 'walk' }, []);
-      // 0 banked rest days, 4 missed days in between — too many to forgive.
-      await evaluateStreakOnAppOpen(db, daysAgo(0));
-
-      const streak = await getStreakState(db);
-      expect(streak.currentStreak).toBe(0);
-    });
-
-    it('leaves a reset streak indistinguishable from a brand-new one — no punitive state', async () => {
-      await logWorkoutWithTags(db, { date: daysAgo(10), activityType: 'walk' }, []);
-      await evaluateStreakOnAppOpen(db, daysAgo(0));
-      const afterReset = await getStreakState(db);
-
-      const fresh = await getStreakState(createTestDb());
-
-      expect(afterReset.currentStreak).toBe(fresh.currentStreak);
-    });
-
-    it('earns a banked rest day every 7 consecutive active days, capped at 3', async () => {
-      for (let i = 13; i >= 0; i--) {
-        await logWorkoutWithTags(db, { date: daysAgo(i), activityType: 'walk' }, []);
-      }
-      const streak = await getStreakState(db);
-      expect(streak.currentStreak).toBe(14);
-      expect(streak.restDaysBanked).toBe(2); // earned at day 7 and day 14
-    });
-
-    it('caps banked rest days at 3 even after many earning milestones', async () => {
-      for (let i = 27; i >= 0; i--) {
-        await logWorkoutWithTags(db, { date: daysAgo(i), activityType: 'walk' }, []);
-      }
-      const streak = await getStreakState(db);
-      expect(streak.restDaysBanked).toBe(3); // would be 4 uncapped
     });
   });
 
@@ -168,7 +95,7 @@ describe('flux-workout-service', () => {
   describe('logWorkoutWithTags', () => {
     it('links every provided tag to the workout, without duplicate rows', async () => {
       const tagId = await getOrCreateTag(db, 'Strong finish');
-      const workoutId = await logWorkoutWithTags(
+      const { workoutId } = await logWorkoutWithTags(
         db,
         { date: daysAgo(0), activityType: 'lift' },
         [tagId, tagId] // e.g. a double-tap bug upstream in the UI
@@ -179,13 +106,43 @@ describe('flux-workout-service', () => {
         [workoutId]
       );
       expect(links).toHaveLength(1);
+    });
 
-      // NOTE: use_count is bumped once per array entry, not once per row
-      // actually inserted — so a duplicate tagId in the input array will
-      // inflate use_count even though only one link is created. Worth
-      // deduping tagIds client-side before calling this, or fixing here.
+    it('dedupes duplicate tag ids before bumping use_count, so a double-tap only counts once', async () => {
+      const tagId = await getOrCreateTag(db, 'Deduped tag');
+      await logWorkoutWithTags(
+        db,
+        { date: daysAgo(0), activityType: 'lift' },
+        [tagId, tagId]
+      );
+
       const tagRow = await db.getFirstAsync<any>(`SELECT use_count FROM tags WHERE id = ?`, [tagId]);
-      expect(tagRow.use_count).toBe(2); // documents the current behavior
+      expect(tagRow.use_count).toBe(1);
+    });
+
+    it('returns the workoutId and a dropResult from the bucket service', async () => {
+      const result = await logWorkoutWithTags(
+        db,
+        { date: daysAgo(0), activityType: 'walk', durationMinutes: 25, moodAfter: 4 },
+        []
+      );
+
+      expect(typeof result.workoutId).toBe('number');
+      expect(result.dropResult).toBeDefined();
+      expect(result.dropResult.dropsEarned).toBeGreaterThan(0);
+    });
+
+    it('increases the bucket lifetime_drops when a workout is logged', async () => {
+      const before = await db.getFirstAsync<any>(`SELECT lifetime_drops FROM bucket WHERE id = 1`);
+
+      await logWorkoutWithTags(
+        db,
+        { date: daysAgo(0), activityType: 'walk', durationMinutes: 25, moodAfter: 4 },
+        []
+      );
+
+      const after = await db.getFirstAsync<any>(`SELECT lifetime_drops FROM bucket WHERE id = 1`);
+      expect(after.lifetime_drops).toBeGreaterThan(before.lifetime_drops);
     });
   });
 });
