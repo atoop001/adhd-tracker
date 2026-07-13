@@ -6,15 +6,16 @@ Flux is a local-first ADHD fitness tracker. It replaces streak mechanics with a 
 **NOT**: a weight loss app, an AI app, a social platform, ad-supported, or shame-based.
 
 ## Current State
-- Expo config initialized: `package.json`, `tsconfig.json`, `app.json`, `babel.config.js`, `metro.config.js` created
-- Run `npm install` to install dependencies (node_modules not yet present)
+- Expo config initialized + `npm install` complete (788 packages, Node 24 / npm 11)
 - Source files moved to target directories — do NOT look for them at root
-- Next build step: **Step 1** — `lib/flux-db.ts` + `context/DatabaseContext.tsx`
+- **Next build step: Step 2** — `constants/colors.ts`
 
 ### Files in place (do not rewrite)
 - `lib/flux-types.ts` — COMPLETE + new types added (BucketState, TierInfo, DropResult, BodyLog, CalorieLog)
 - `lib/flux-pattern-engine.ts` — COMPLETE, no modifications ever
 - `lib/flux-workout-service.ts` — needs 3 fixes from brief §10 (do at build step 4, after bucket_service exists)
+- `lib/flux-db.ts` — COMPLETE (full schema + seed data, singleton getDb())
+- `context/DatabaseContext.tsx` — COMPLETE (DatabaseProvider + useDatabaseContext hook)
 - `__tests__/flux-test-utils.ts` — COMPLETE, no modifications ever
 - `__tests__/flux-pattern-engine.test.ts` — COMPLETE, no modifications ever
 - `__tests__/flux-workout-service.test.ts` — needs streak tests removed (do at build step 4)
