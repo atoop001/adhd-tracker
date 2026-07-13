@@ -263,7 +263,10 @@ Create three components in `components/`. Colours from `constants/colors.ts`.
 Animated pieces use react-native-reanimated and MUST accept `reduceMotion?: boolean`
 (default false) — when true, skip/shorten animations (jump to final state).
 
-**EnergyOrb.tsx** — Props: `level: 1|2|3|4|5; selected: boolean; onPress: () => void; disabled?: boolean; reduceMotion?: boolean`
+**EnergyOrb.tsx** — Props: `level: 1|2|3|4|5; selected: boolean; dimmed?: boolean; onPress: () => void; disabled?: boolean; reduceMotion?: boolean`
+- `dimmed` (parent sets it on non-selected orbs whenever any orb is selected): renders
+  opacity 0.45 but the orb STAYS pressable — users must be able to change their
+  selection. `disabled` separately means not pressable. Do not conflate the two.
 - Circular orb (~56px) with soft radial-ish gradient look (nested Views or
   react-native-svg RadialGradient), emoji + label below, glow shadow when selected.
 - Level → colour/emoji/label map (define locally):
