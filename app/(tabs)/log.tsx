@@ -213,6 +213,7 @@ export default function LogScreen() {
   }, [activityType, busy, selectedTagIds, durationMinutes, mood, db, calorieTrackingEnabled, calorieValue]);
 
   const handleNudgeDone = useCallback(() => {
+    setNudge(null);
     resetForm();
     router.replace('/(tabs)');
   }, [resetForm, router]);
@@ -346,7 +347,7 @@ export default function LogScreen() {
         </Pressable>
       </ScrollView>
 
-      <Modal visible={nudge !== null} transparent animationType="fade" onRequestClose={() => {}}>
+      <Modal visible={nudge !== null} transparent animationType={reduceMotion ? 'none' : 'fade'} onRequestClose={() => {}}>
         <View style={styles.modalBackdrop}>
           <View style={styles.modalCard}>
             {nudge && (
