@@ -6,20 +6,16 @@ Flux is a local-first ADHD fitness tracker. It replaces streak mechanics with a 
 **NOT**: a weight loss app, an AI app, a social platform, ad-supported, or shame-based.
 
 ## Current State
-- Expo config initialized + `npm install` complete (788 packages, Node 24 / npm 11)
-- Source files moved to target directories — do NOT look for them at root
-- **Next build step: Step 2** — `constants/colors.ts`
+- **Layer 1 build steps 1–14 COMPLETE and merged to master** (2026-07-14): db, types, colors, bucket service + tests, workout service on bucket (streaks fully removed), all 9 components + PaywallSheet, navigation shell + SettingsContext, onboarding, all 5 tab screens, local notifications.
+- Step 15 (RevenueCat) is STUBBED behind `lib/flux-purchases.ts` (no react-native-purchases import; settings key `dev_full_access`, missing = full). Real integration needs RevenueCat + store accounts; keep the seam's signatures stable.
+- Verification gate: `npx tsc --noEmit` + `npx jest --forceExit` (plain jest hangs — open-handle issue). 60/60 tests green.
+- Not yet done: run in Expo Go (user smoke test), post-merge polish backlog in `.superpowers/sdd/progress.md`, Layer 2 (deferred).
+- Build plan used: `docs/plans/layer-1-plan.md` (supersedes the build order below for history; the order is retained for reference).
 
 ### Files in place (do not rewrite)
-- `lib/flux-types.ts` — COMPLETE + new types added (BucketState, TierInfo, DropResult, BodyLog, CalorieLog)
-- `lib/flux-pattern-engine.ts` — COMPLETE, no modifications ever
-- `lib/flux-workout-service.ts` — needs 3 fixes from brief §10 (do at build step 4, after bucket_service exists)
-- `lib/flux-db.ts` — COMPLETE (full schema + seed data, singleton getDb())
-- `context/DatabaseContext.tsx` — COMPLETE (DatabaseProvider + useDatabaseContext hook)
-- `__tests__/flux-test-utils.ts` — COMPLETE, no modifications ever
-- `__tests__/flux-pattern-engine.test.ts` — COMPLETE, no modifications ever
-- `__tests__/flux-workout-service.test.ts` — needs streak tests removed (do at build step 4)
-- `jest.config.js` — COMPLETE at root, no modifications
+- `lib/flux-types.ts`, `lib/flux-pattern-engine.ts`, `lib/flux-db.ts`, `context/DatabaseContext.tsx`, `__tests__/flux-test-utils.ts`, `__tests__/flux-pattern-engine.test.ts`, `jest.config.js` — COMPLETE, no modifications ever
+- `lib/flux-workout-service.ts` — CONVERTED to bucket system (returns `{ workoutId, dropResult }`)
+- Everything under `app/`, `components/`, `constants/`, plus `lib/bucket_service.ts`, `lib/flux-purchases.ts`, `lib/flux-notifications.ts`, `context/SettingsContext.tsx` — built and reviewed in the Layer 1 run
 
 ## Tech Stack
 - Framework: React Native + Expo SDK 52+, Expo Router, TypeScript strict mode
