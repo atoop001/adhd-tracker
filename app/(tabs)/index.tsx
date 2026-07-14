@@ -56,6 +56,7 @@ export default function HomeScreen() {
   const calorieTrackingEnabled = settings.calorie_tracking === 'true';
 
   const [loading, setLoading] = useState(true);
+  const [bodyLoading, setBodyLoading] = useState(false);
   const [selectedEnergy, setSelectedEnergy] = useState<EnergyLevel | null>(null);
   const [suggestionDismissed, setSuggestionDismissed] = useState(false);
   const [bucketState, setBucketState] = useState<BucketState | null>(null);
@@ -88,29 +89,6 @@ export default function HomeScreen() {
         console.warn('[flux] failed to load bucket state', err);
       }
 
-      if (bodyMetricsEnabled) {
-        try {
-          const bodyLogs = await db.getAllAsync<BodyLogRow>(
-            'SELECT date, weight FROM body_logs ORDER BY date DESC LIMIT 2'
-          );
-          if (!cancelled) setRecentBodyLogs(bodyLogs);
-        } catch (err) {
-          console.warn('[flux] failed to load body logs', err);
-        }
-
-        if (calorieTrackingEnabled) {
-          try {
-            const calorieRow = await db.getFirstAsync<CalorieLogRow>(
-              'SELECT total_calories FROM calorie_logs WHERE date = ?',
-              [today]
-            );
-            if (!cancelled) setTodayCalories(calorieRow?.total_calories ?? null);
-          } catch (err) {
-            console.warn('[flux] failed to load today calories', err);
-          }
-        }
-      }
-
       try {
         const rhythm = await getPattern<EnergyRhythmResult>(db, 'day_energy_rhythm');
         if (!cancelled) setEnergyRhythm(rhythm.data);
@@ -131,7 +109,52 @@ export default function HomeScreen() {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [db]);
+
+  // Body/calorie data loads in its own effect so toggling those settings
+  // only refreshes the body card — the orbs, bucket, and insights above
+  // never skeleton-flash when this re-runs.
+  useEffect(() => {
+    if (!bodyMetricsEnabled) {
+      setRecentBodyLogs([]);
+      setTodayCalories(null);
+      return;
+    }
+
+    let cancelled = false;
+    const today = todayLocal();
+    setBodyLoading(true);
+
+    (async () => {
+      try {
+        const bodyLogs = await db.getAllAsync<BodyLogRow>(
+          'SELECT date, weight FROM body_logs ORDER BY date DESC LIMIT 2'
+        );
+        if (!cancelled) setRecentBodyLogs(bodyLogs);
+      } catch (err) {
+        console.warn('[flux] failed to load body logs', err);
+      }
+
+      if (calorieTrackingEnabled) {
+        try {
+          const calorieRow = await db.getFirstAsync<CalorieLogRow>(
+            'SELECT total_calories FROM calorie_logs WHERE date = ?',
+            [today]
+          );
+          if (!cancelled) setTodayCalories(calorieRow?.total_calories ?? null);
+        } catch (err) {
+          console.warn('[flux] failed to load today calories', err);
+        }
+      } else if (!cancelled) {
+        setTodayCalories(null);
+      }
+
+      if (!cancelled) setBodyLoading(false);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [db, bodyMetricsEnabled, calorieTrackingEnabled]);
 
   const handleOrbPress = useCallback(
@@ -225,6 +248,9 @@ export default function HomeScreen() {
 
           {bodyMetricsEnabled && (
             <CollapsibleCard title="Body">
+              {bodyLoading ? (
+                <View style={[styles.skeleton, styles.skeletonBodyRow]} />
+              ) : (
               <View style={styles.bodyRow}>
                 {latestWeight !== null && (
                   <Text style={styles.bodyText}>
@@ -239,6 +265,7 @@ export default function HomeScreen() {
                   <Text style={styles.bodyTextMuted}>No entries yet.</Text>
                 )}
               </View>
+              )}
             </CollapsibleCard>
           )}
 
@@ -315,5 +342,9 @@ const styles = StyleSheet.create({
   },
   skeletonCard: {
     height: 160,
+  },
+  skeletonBodyRow: {
+    height: 40,
+    borderRadius: radii.small,
   },
 });
