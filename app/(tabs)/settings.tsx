@@ -128,6 +128,16 @@ export default function SettingsScreen() {
     refreshEntitlement();
   }, [refreshEntitlement]);
 
+  // Fire-and-forget setting writes: log-only on failure, never surfaced.
+  const safeSet = useCallback(
+    (key: string, value: string) => {
+      setSetting(key, value).catch((err) =>
+        console.warn('[flux] setting write did not complete', err)
+      );
+    },
+    [setSetting]
+  );
+
   // Check-ins ---------------------------------------------------------
 
   const handleNotificationToggle = useCallback(
@@ -154,9 +164,9 @@ export default function SettingsScreen() {
 
   const handleMedicationToggle = useCallback(
     (value: boolean) => {
-      setSetting('medication_tracking', value ? 'true' : 'false');
+      safeSet('medication_tracking', value ? 'true' : 'false');
     },
-    [setSetting]
+    [safeSet]
   );
 
   // Body & Nutrition ----------------------------------------------------
@@ -168,23 +178,23 @@ export default function SettingsScreen() {
           setPaywallVisible(true);
           return;
         }
-        setSetting('body_metrics_enabled', 'true');
+        safeSet('body_metrics_enabled', 'true');
       } else {
-        setSetting('body_metrics_enabled', 'false');
+        safeSet('body_metrics_enabled', 'false');
       }
     },
-    [entitlement, setSetting]
+    [entitlement, safeSet]
   );
 
   const handleCalorieToggle = useCallback(
     (value: boolean) => {
       if (!value) {
-        setSetting('calorie_tracking', 'false');
+        safeSet('calorie_tracking', 'false');
         return;
       }
 
       if (settings.calorie_consent_shown === 'true') {
-        setSetting('calorie_tracking', 'true');
+        safeSet('calorie_tracking', 'true');
         return;
       }
 
@@ -199,7 +209,7 @@ export default function SettingsScreen() {
         },
       ]);
     },
-    [settings.calorie_consent_shown, setSetting]
+    [settings.calorie_consent_shown, setSetting, safeSet]
   );
 
   const handleUnlock = useCallback(async () => {
@@ -213,15 +223,19 @@ export default function SettingsScreen() {
 
   const handleWeeklyGoalChange = useCallback(
     (value: string) => {
-      setSetting('weekly_goal', value);
+      safeSet('weekly_goal', value);
     },
-    [setSetting]
+    [safeSet]
   );
 
   const performResetBucket = useCallback(async () => {
-    await db.runAsync(
-      `UPDATE bucket SET lifetime_drops = 0, current_tier = 1, total_workouts = 0 WHERE id = 1`
-    );
+    try {
+      await db.runAsync(
+        `UPDATE bucket SET lifetime_drops = 0, current_tier = 1, total_workouts = 0 WHERE id = 1`
+      );
+    } catch (err) {
+      console.warn('[flux] bucket reset did not complete', err);
+    }
   }, [db]);
 
   const confirmResetBucket = useCallback(() => {
@@ -247,18 +261,23 @@ export default function SettingsScreen() {
   // Privacy ---------------------------------------------------------------
 
   const performClearAllData = useCallback(async () => {
-    await db.execAsync(`
-      DELETE FROM workout_tags;
-      DELETE FROM workouts;
-      DELETE FROM check_ins;
-      DELETE FROM body_logs;
-      DELETE FROM calorie_logs;
-      DELETE FROM patterns_cache;
-      DELETE FROM tags WHERE is_preset = 0;
-      UPDATE bucket SET lifetime_drops = 0, current_tier = 1, total_workouts = 0 WHERE id = 1;
-    `);
-    await setSetting('onboarding_complete', 'false');
-    router.replace('/(onboarding)');
+    try {
+      await db.execAsync(`
+        DELETE FROM workout_tags;
+        DELETE FROM workouts;
+        DELETE FROM check_ins;
+        DELETE FROM body_logs;
+        DELETE FROM calorie_logs;
+        DELETE FROM patterns_cache;
+        DELETE FROM tags WHERE is_preset = 0;
+        UPDATE bucket SET lifetime_drops = 0, current_tier = 1, total_workouts = 0 WHERE id = 1;
+      `);
+      // Only after the deletes succeed: flip the onboarding flag and leave.
+      await setSetting('onboarding_complete', 'false');
+      router.replace('/(onboarding)');
+    } catch (err) {
+      console.warn('[flux] clear all data did not complete', err);
+    }
   }, [db, setSetting, router]);
 
   const confirmClearAllData = useCallback(() => {
@@ -285,9 +304,9 @@ export default function SettingsScreen() {
 
   const handleReduceAnimationsToggle = useCallback(
     (value: boolean) => {
-      setSetting('reduce_animations', value ? 'true' : 'false');
+      safeSet('reduce_animations', value ? 'true' : 'false');
     },
-    [setSetting]
+    [safeSet]
   );
 
   // Developer ---------------------------------------------------------------
