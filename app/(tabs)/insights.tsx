@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { colors, radii, spacing } from '../../constants/colors';
 import { useDatabaseContext } from '../../context/DatabaseContext';
@@ -131,12 +132,13 @@ export default function InsightsScreen() {
   const [fullData, setFullData] = useState<FullPatternData | null>(null);
   const [paywallVisible, setPaywallVisible] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    (async () => {
-      setLoading(true);
-
+  // Shared fetch for entitlement/workout-count/pattern data. Used by the
+  // initial mount effect (which toggles the skeleton) and by the
+  // focus-refetch effect (silent) so the workout count, entitlement tier
+  // and patterns don't go stale after new workouts are logged or a dev
+  // toggle flips entitlement while this tab stays mounted in the background.
+  const fetchInsightsData = useCallback(
+    async (cancelledRef: { current: boolean }) => {
       let tier: EntitlementTier = 'full';
       let count = 0;
 
@@ -145,7 +147,7 @@ export default function InsightsScreen() {
       } catch (err) {
         console.warn('[flux] failed to load entitlement', err);
       }
-      if (cancelled) return;
+      if (cancelledRef.current) return;
       setEntitlement(tier);
 
       try {
@@ -156,34 +158,54 @@ export default function InsightsScreen() {
       } catch (err) {
         console.warn('[flux] failed to load workout count', err);
       }
-      if (cancelled) return;
+      if (cancelledRef.current) return;
       setWorkoutCount(count);
 
       if (count >= MIN_WORKOUTS_FOR_INSIGHTS) {
         if (tier === 'free') {
           try {
             const card = await findFirstAvailableCard(db);
-            if (!cancelled) setPreviewCard(card);
+            if (!cancelledRef.current) setPreviewCard(card);
           } catch (err) {
             console.warn('[flux] failed to load preview pattern', err);
           }
         } else {
           try {
             const data = await loadFullPatterns(db);
-            if (!cancelled) setFullData(data);
+            if (!cancelledRef.current) setFullData(data);
           } catch (err) {
             console.warn('[flux] failed to load patterns', err);
           }
         }
       }
+    },
+    [db]
+  );
 
-      if (!cancelled) setLoading(false);
+  useEffect(() => {
+    const cancelledRef = { current: false };
+    setLoading(true);
+
+    (async () => {
+      await fetchInsightsData(cancelledRef);
+      if (!cancelledRef.current) setLoading(false);
     })();
 
     return () => {
-      cancelled = true;
+      cancelledRef.current = true;
     };
-  }, [db]);
+  }, [db, fetchInsightsData]);
+
+  // Silent refetch on refocus — no loading/skeleton flip.
+  useFocusEffect(
+    useCallback(() => {
+      const cancelledRef = { current: false };
+      fetchInsightsData(cancelledRef);
+      return () => {
+        cancelledRef.current = true;
+      };
+    }, [fetchInsightsData])
+  );
 
   const handleUnlock = useCallback(async () => {
     try {

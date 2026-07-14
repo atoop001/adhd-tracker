@@ -49,9 +49,20 @@ function todayLocal(): string {
   return localDateString(new Date());
 }
 
-// Normalize a comma decimal separator to a dot so comma-locale input parses.
+// Matches a thousands-grouped number like "1,200" or "12,345.6" — a comma
+// followed by exactly 3 digits, repeated. Distinguishes that from a
+// comma-locale decimal separator like "1,2" (which means 1.2).
+const THOUSANDS_SEPARATOR_RE = /^\d{1,3}(,\d{3})+(\.\d+)?$/;
+
+// Normalize numeric text input: strip thousands separators ("1,200" -> "1200")
+// or, failing that, treat a comma as a decimal separator so comma-locale
+// input parses ("1,2" -> "1.2").
 function normalizeDecimal(text: string): string {
-  return text.trim().replace(',', '.');
+  const trimmed = text.trim();
+  if (THOUSANDS_SEPARATOR_RE.test(trimmed)) {
+    return trimmed.replace(/,/g, '');
+  }
+  return trimmed.replace(',', '.');
 }
 
 // Optional measurement fields: empty or unparseable input is treated as

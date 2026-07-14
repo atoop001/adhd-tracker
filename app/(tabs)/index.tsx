@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { colors, radii, spacing } from '../../constants/colors';
 import { useDatabaseContext } from '../../context/DatabaseContext';
@@ -65,17 +65,21 @@ export default function HomeScreen() {
   const [energyRhythm, setEnergyRhythm] = useState<EnergyRhythmResult | null>(null);
   const [hydrationInsight, setHydrationInsight] = useState<HydrationInsightResult | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    const today = todayLocal();
+  // Shared fetch for the check-in/bucket/pattern data. Used both by the
+  // initial mount effect (which toggles the skeleton) and by the
+  // focus-refetch effect (which is silent) so the bucket, energy rhythm and
+  // hydration insight never go stale while this tab stays mounted in the
+  // background — e.g. after logging a workout or resetting the bucket.
+  const fetchHomeData = useCallback(
+    async (cancelledRef: { current: boolean }) => {
+      const today = todayLocal();
 
-    (async () => {
       try {
         const checkIn = await db.getFirstAsync<{ energy_level: number }>(
           'SELECT energy_level FROM check_ins WHERE date = ?',
           [today]
         );
-        if (!cancelled && checkIn) {
+        if (!cancelledRef.current && checkIn) {
           setSelectedEnergy(checkIn.energy_level as EnergyLevel);
         }
       } catch (err) {
@@ -84,32 +88,53 @@ export default function HomeScreen() {
 
       try {
         const bucket = await getBucketState(db);
-        if (!cancelled) setBucketState(bucket);
+        if (!cancelledRef.current) setBucketState(bucket);
       } catch (err) {
         console.warn('[flux] failed to load bucket state', err);
       }
 
       try {
         const rhythm = await getPattern<EnergyRhythmResult>(db, 'day_energy_rhythm');
-        if (!cancelled) setEnergyRhythm(rhythm.data);
+        if (!cancelledRef.current) setEnergyRhythm(rhythm.data);
       } catch (err) {
         console.warn('[flux] failed to load energy rhythm pattern', err);
       }
 
       try {
         const hydration = await getPattern<HydrationInsightResult>(db, 'hydration_insight');
-        if (!cancelled) setHydrationInsight(hydration.data);
+        if (!cancelledRef.current) setHydrationInsight(hydration.data);
       } catch (err) {
         console.warn('[flux] failed to load hydration pattern', err);
       }
+    },
+    [db]
+  );
 
-      if (!cancelled) setLoading(false);
+  useEffect(() => {
+    const cancelledRef = { current: false };
+
+    (async () => {
+      await fetchHomeData(cancelledRef);
+      if (!cancelledRef.current) setLoading(false);
     })();
 
     return () => {
-      cancelled = true;
+      cancelledRef.current = true;
     };
-  }, [db]);
+  }, [db, fetchHomeData]);
+
+  // Silent refetch on refocus — no loading/skeleton flip. Keeps the bucket
+  // fill, energy rhythm and hydration insight current after the Log screen
+  // or Settings changes data while Home stays mounted underneath.
+  useFocusEffect(
+    useCallback(() => {
+      const cancelledRef = { current: false };
+      fetchHomeData(cancelledRef);
+      return () => {
+        cancelledRef.current = true;
+      };
+    }, [fetchHomeData])
+  );
 
   // Body/calorie data loads in its own effect so toggling those settings
   // only refreshes the body card — the orbs, bucket, and insights above
@@ -283,7 +308,11 @@ export default function HomeScreen() {
                 <InsightCard
                   icon="💧"
                   title="Hydration pattern"
-                  body={`Mood runs ${hydrationInsight.difference}pts higher when well hydrated.`}
+                  body={
+                    typeof hydrationInsight.difference === 'number'
+                      ? `Mood runs ${hydrationInsight.difference}pts higher when well hydrated.`
+                      : 'Mood runs higher when well hydrated.'
+                  }
                   sentiment="neutral"
                 />
               )}
