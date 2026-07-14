@@ -18,6 +18,7 @@ export default function OnboardingSuggestionScreen() {
   const energyLevel = parseEnergyLevel(energy);
 
   const [showRestMessage, setShowRestMessage] = useState(false);
+  const [busy, setBusy] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -27,10 +28,14 @@ export default function OnboardingSuggestionScreen() {
   }, []);
 
   const handleStart = () => {
+    if (busy) return;
+    setBusy(true);
     router.push('/(onboarding)/notifications');
   };
 
   const handleSkip = () => {
+    if (busy) return;
+    setBusy(true);
     setShowRestMessage(true);
     timerRef.current = setTimeout(() => {
       router.push('/(onboarding)/notifications');

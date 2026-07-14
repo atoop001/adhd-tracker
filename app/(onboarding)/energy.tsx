@@ -31,6 +31,9 @@ export default function OnboardingEnergyScreen() {
     setSaving(true);
     try {
       await logCheckIn(db, { date: todayLocal(), energyLevel: level, mood: level });
+    } catch (err) {
+      // Log only — no user-facing error copy. Selection stays as the user chose it.
+      console.warn('[flux] check-in write did not complete', err);
     } finally {
       setSaving(false);
     }
