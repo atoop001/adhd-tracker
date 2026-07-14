@@ -49,6 +49,20 @@ function todayLocal(): string {
   return localDateString(new Date());
 }
 
+// Normalize a comma decimal separator to a dot so comma-locale input parses.
+function normalizeDecimal(text: string): string {
+  return text.trim().replace(',', '.');
+}
+
+// Optional measurement fields: empty or unparseable input is treated as
+// not-provided (null) rather than blocking or corrupting the entry.
+function parseOptionalMeasurement(text: string): number | null {
+  const normalized = normalizeDecimal(text);
+  if (!normalized) return null;
+  const value = Number(normalized);
+  return Number.isFinite(value) && value > 0 ? value : null;
+}
+
 function buildWeightPoints(values: number[]): string {
   if (values.length === 0) return '';
   const width = WEIGHT_CHART_WIDTH;
@@ -208,7 +222,7 @@ export default function BodyScreen() {
 
   const handleSaveBodyLog = useCallback(async () => {
     if (savingBody) return;
-    const weightNum = Number(formWeight);
+    const weightNum = Number(normalizeDecimal(formWeight));
     if (!formDate.trim() || !Number.isFinite(weightNum) || weightNum <= 0) return;
 
     setSavingBody(true);
@@ -219,10 +233,10 @@ export default function BodyScreen() {
         [
           formDate.trim(),
           weightNum,
-          formWaist.trim() ? Number(formWaist) : null,
-          formChest.trim() ? Number(formChest) : null,
-          formHips.trim() ? Number(formHips) : null,
-          formArms.trim() ? Number(formArms) : null,
+          parseOptionalMeasurement(formWaist),
+          parseOptionalMeasurement(formChest),
+          parseOptionalMeasurement(formHips),
+          parseOptionalMeasurement(formArms),
           formNotes.trim() ? formNotes.trim() : null,
         ]
       );
@@ -239,7 +253,7 @@ export default function BodyScreen() {
 
   const handleSaveCalorieLog = useCallback(async () => {
     if (savingCalorie) return;
-    const calories = Number(calorieValue);
+    const calories = Number(normalizeDecimal(calorieValue));
     if (!calorieDate.trim() || !Number.isFinite(calories) || calories <= 0) return;
 
     setSavingCalorie(true);
@@ -261,8 +275,10 @@ export default function BodyScreen() {
     }
   }, [db, calorieDate, calorieValue, savingCalorie, fetchCalorieLogs]);
 
-  const canSaveBody = formDate.trim().length > 0 && Number.isFinite(Number(formWeight)) && Number(formWeight) > 0;
-  const canSaveCalorie = calorieDate.trim().length > 0 && Number.isFinite(Number(calorieValue)) && Number(calorieValue) > 0;
+  const weightInput = Number(normalizeDecimal(formWeight));
+  const calorieInput = Number(normalizeDecimal(calorieValue));
+  const canSaveBody = formDate.trim().length > 0 && Number.isFinite(weightInput) && weightInput > 0;
+  const canSaveCalorie = calorieDate.trim().length > 0 && Number.isFinite(calorieInput) && calorieInput > 0;
 
   return (
     <ScrollView
