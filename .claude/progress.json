@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "project": "Flux",
+  "updated": "2026-07-15",
+  "milestones": [
+    {
+      "id": "M1",
+      "title": "Layer 1 build (plan: docs/plans/layer-1-plan.md)",
+      "steps": [
+        { "title": "Foundation: colors, bucket service + tests, types", "done": true },
+        { "title": "Workout service on bucket system (streaks removed)", "done": true },
+        { "title": "All 9 components + PaywallSheet", "done": true },
+        { "title": "Navigation shell, onboarding, all 5 tab screens", "done": true },
+        { "title": "Notifications + purchases stub seam", "done": true },
+        { "title": "Final whole-branch review, merge to master, 60/60 tests", "done": true }
+      ]
+    },
+    {
+      "id": "M2",
+      "title": "Device smoke test in Expo Go",
+      "steps": [
+        { "title": "App boots on device (worklets 0.10.0 pin)", "done": true },
+        { "title": "Onboarding flow end-to-end", "done": false },
+        { "title": "Check-in + workout logging + bucket drops", "done": false },
+        { "title": "Animations incl. reduce_animations setting", "done": false },
+        { "title": "Insights empty state + body-tab toggle", "done": false },
+        { "title": "Data persists across app restart", "done": false }
+      ]
+    },
+    {
+      "id": "M3",
+      "title": "Post-test fixes and polish",
+      "steps": [
+        { "title": "Batch-fix issues from docs/testing/smoke-test-issues.md", "done": false },
+        { "title": "Polish backlog from .superpowers/sdd/progress.md", "done": false },
+        { "title": "expo-doctor cleanup: splash key, patch-version bumps", "done": false }
+      ]
+    },
+    {
+      "id": "M4",
+      "title": "RevenueCat integration",
+      "steps": [
+        { "title": "Create RevenueCat + app store accounts", "done": false },
+        { "title": "Wire lib/flux-purchases.ts seam to react-native-purchases", "done": false },
+        { "title": "Verify paywall + entitlement flow on device", "done": false }
+      ]
+    },
+    {
+      "id": "M5",
+      "title": "Layer 2 (deferred)",
+      "steps": [
+        { "title": "Layer 2: Supabase auth/sync, social features (deferred until Layer 1 ships)", "done": false }
+      ]
+    }
+  ]
+}
