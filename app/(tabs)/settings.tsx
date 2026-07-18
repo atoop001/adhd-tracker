@@ -20,10 +20,20 @@ const CALORIE_CONSENT_COPY =
   "Calorie tracking is a neutral log. Flux doesn't set targets or evaluate your intake.";
 
 function SettingsSection({ title, children }: { title: string; children: React.ReactNode }) {
+  // Interleave hairline separators so the last row never renders a stray
+  // border above the card's bottom padding.
+  const items = React.Children.toArray(children);
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{title}</Text>
-      <View style={styles.card}>{children}</View>
+      <View style={styles.card}>
+        {items.map((child, i) => (
+          <React.Fragment key={i}>
+            {child}
+            {i < items.length - 1 && <View style={styles.separator} />}
+          </React.Fragment>
+        ))}
+      </View>
     </View>
   );
 }
@@ -142,11 +152,15 @@ export default function SettingsScreen() {
 
   const handleNotificationToggle = useCallback(
     async (value: boolean) => {
-      await setSetting('notification_enabled', value ? 'true' : 'false');
-      if (value) {
-        await scheduleCheckInReminder(db, settings.notification_time ?? '08:00');
-      } else {
-        await cancelCheckInReminder(db);
+      try {
+        await setSetting('notification_enabled', value ? 'true' : 'false');
+        if (value) {
+          await scheduleCheckInReminder(db, settings.notification_time ?? '08:00');
+        } else {
+          await cancelCheckInReminder(db);
+        }
+      } catch (err) {
+        console.warn('[flux] reminder toggle did not complete', err);
       }
     },
     [db, setSetting, settings.notification_time]
@@ -154,9 +168,13 @@ export default function SettingsScreen() {
 
   const handleNotificationTimeChange = useCallback(
     async (time: string) => {
-      await setSetting('notification_time', time);
-      if (settings.notification_enabled === 'true') {
-        await scheduleCheckInReminder(db, time);
+      try {
+        await setSetting('notification_time', time);
+        if (settings.notification_enabled === 'true') {
+          await scheduleCheckInReminder(db, time);
+        }
+      } catch (err) {
+        console.warn('[flux] reminder time change did not complete', err);
       }
     },
     [db, setSetting, settings.notification_enabled]
@@ -203,8 +221,12 @@ export default function SettingsScreen() {
         {
           text: 'Continue',
           onPress: async () => {
-            await setSetting('calorie_consent_shown', 'true');
-            await setSetting('calorie_tracking', 'true');
+            try {
+              await setSetting('calorie_consent_shown', 'true');
+              await setSetting('calorie_tracking', 'true');
+            } catch (err) {
+              console.warn('[flux] calorie consent write did not complete', err);
+            }
           },
         },
       ]);
@@ -213,10 +235,14 @@ export default function SettingsScreen() {
   );
 
   const handleUnlock = useCallback(async () => {
-    await purchaseFull(db);
-    await refreshEntitlement();
-    setPaywallVisible(false);
-    await setSetting('body_metrics_enabled', 'true');
+    try {
+      await purchaseFull(db);
+      await refreshEntitlement();
+      setPaywallVisible(false);
+      await setSetting('body_metrics_enabled', 'true');
+    } catch (err) {
+      console.warn('[flux] unlock did not complete', err);
+    }
   }, [db, refreshEntitlement, setSetting]);
 
   // Progress ------------------------------------------------------------
@@ -313,8 +339,12 @@ export default function SettingsScreen() {
 
   const handleDevEntitlementToggle = useCallback(
     async (value: boolean) => {
-      await setDevEntitlement(db, value ? 'full' : 'free');
-      await refreshEntitlement();
+      try {
+        await setDevEntitlement(db, value ? 'full' : 'free');
+        await refreshEntitlement();
+      } catch (err) {
+        console.warn('[flux] dev entitlement toggle did not complete', err);
+      }
     },
     [db, refreshEntitlement]
   );
@@ -445,8 +475,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 14,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
+  },
+  separator: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.border,
   },
   rowLabel: {
     fontSize: 15,
@@ -465,8 +497,6 @@ const styles = StyleSheet.create({
   presetRow: {
     paddingVertical: 14,
     gap: 10,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
   },
   presetOptions: {
     flexDirection: 'row',

@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import Svg, { ClipPath, Defs, Rect } from 'react-native-svg';
 import Animated, { Easing, useAnimatedProps, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 import { colors } from '../constants/colors';
-import { getTierInfo } from '../lib/bucket_service';
+import { getTierInfo, getTierName } from '../lib/bucket_service';
 import type { TierInfo } from '../lib/flux-types';
 
 export interface BucketWidgetProps {
@@ -20,11 +20,6 @@ const VESSEL_HEIGHT = 180;
 const VESSEL_RADIUS = 16;
 const SHIMMER_WIDTH = 44;
 const CLIP_ID = 'bucketWidgetVesselClip';
-
-// Tier names in ascending order, indexed by tier number (1-based). Used to
-// resolve the *next* tier's name from the current tier's number — TierInfo
-// only carries the current tier's name.
-const TIER_NAMES: TierInfo['name'][] = ['Pail', 'Bucket', 'Barrel', 'Trough', 'Reservoir'];
 
 function formatDrops(n: number): string {
   return n.toLocaleString('en-US');
@@ -93,7 +88,7 @@ export default function BucketWidget({
     x: shimmerX.value,
   }));
 
-  const nextTierName = tierInfo.dropsToNext !== null ? TIER_NAMES[tierInfo.tier] : null;
+  const nextTierName = tierInfo.dropsToNext !== null ? getTierName(tierInfo.tier + 1) : null;
 
   return (
     <View style={styles.container}>

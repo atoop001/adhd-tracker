@@ -13,7 +13,13 @@ export default function CollapsibleCard({ title, children, defaultCollapsed }: C
 
   return (
     <View style={styles.card}>
-      <Pressable style={styles.header} onPress={() => setCollapsed((prev) => !prev)} hitSlop={8}>
+      <Pressable
+        style={styles.header}
+        onPress={() => setCollapsed((prev) => !prev)}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: !collapsed }}
+      >
         <Text style={styles.title}>{title}</Text>
         <Text style={[styles.chevron, collapsed && styles.chevronCollapsed]}>▾</Text>
       </Pressable>

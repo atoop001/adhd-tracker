@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -125,9 +125,15 @@ export default function HomeScreen() {
 
   // Silent refetch on refocus — no loading/skeleton flip. Keeps the bucket
   // fill, energy rhythm and hydration insight current after the Log screen
-  // or Settings changes data while Home stays mounted underneath.
+  // or Settings changes data while Home stays mounted underneath. The first
+  // focus always coincides with mount, which already fetched — skip it.
+  const firstFocusRef = useRef(true);
   useFocusEffect(
     useCallback(() => {
+      if (firstFocusRef.current) {
+        firstFocusRef.current = false;
+        return;
+      }
       const cancelledRef = { current: false };
       fetchHomeData(cancelledRef);
       return () => {

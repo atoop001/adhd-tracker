@@ -18,6 +18,8 @@ export default function TagChip({ label, sentiment, selected, onPress, small }: 
     <Pressable
       onPress={onPress}
       hitSlop={8}
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
       style={[styles.chip, small && styles.chipSmall, selectedStyle]}
     >
       <Text style={[styles.label, small && styles.labelSmall, { color: textColor }]}>

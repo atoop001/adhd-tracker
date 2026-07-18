@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -196,9 +196,15 @@ export default function InsightsScreen() {
     };
   }, [db, fetchInsightsData]);
 
-  // Silent refetch on refocus — no loading/skeleton flip.
+  // Silent refetch on refocus — no loading/skeleton flip. The first focus
+  // always coincides with mount, which already fetched — skip it.
+  const firstFocusRef = useRef(true);
   useFocusEffect(
     useCallback(() => {
+      if (firstFocusRef.current) {
+        firstFocusRef.current = false;
+        return;
+      }
       const cancelledRef = { current: false };
       fetchInsightsData(cancelledRef);
       return () => {

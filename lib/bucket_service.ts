@@ -18,6 +18,13 @@ const TIERS = [
   { tier: 5, name: 'Reservoir', start: 1100, size: Infinity },
 ] as const;
 
+/** Name of a tier by its 1-based number; out-of-range clamps to the
+ *  nearest real tier so callers can ask for "tier + 1" at the top end. */
+export function getTierName(tier: number): TierInfo['name'] {
+  const clamped = Math.min(Math.max(tier, TIERS[0].tier), TIERS[TIERS.length - 1].tier);
+  return TIERS[clamped - 1].name;
+}
+
 /** drops = base(10) + duration_bonus + effort_bonus. Never negative,
  *  never less than the base — garbage input still earns the base 10. */
 export function calculateDrops(
