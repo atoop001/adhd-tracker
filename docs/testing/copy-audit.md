@@ -6,7 +6,7 @@ skipped), the no-shame/no-guilt tone constraints, the no-targets rules for
 calories and body data, and the evidence review's "keep claims modest" findings
 (`docs/research/evidence-review.md`).
 
-## Verdict: compliant, with 2 flags needing your decision and 3 minor notes
+## Verdict: compliant — both flags resolved 2026-07-18; 3 minor notes remain
 
 Automated banned-word scan: **zero user-facing hits** (all "fail" matches are
 internal `console.warn` strings). Destructive flows are two-step. Empty states
@@ -28,6 +28,9 @@ brains. Want to point it at something?" (keeps the actionable nudge, drops the
 clinical-sounding precision). Needs your call — it's on the happy path users
 see after every workout.
 
+**✅ Resolved 2026-07-18:** user approved the suggested rewrite; applied to
+`PostWorkoutNudge.tsx`.
+
 ### 2. PaywallSheet pricing + feature copy
 "$7.99/month or $54.99/year · 30-day free trial" and "…complete insights, body
 metrics tracking, and 12 months of history."
@@ -38,6 +41,10 @@ metrics tracking, and 12 months of history."
   enforce anywhere — free tier currently keeps full history. Either the copy
   overpromises the paid tier or a free-tier limit is planned for later; verify
   against the brief's monetization section before launch.
+
+**✅ Resolved 2026-07-18:** user approved the prices as-is and decided there
+will be **no history limits on any tier**; "12 months of history" removed from
+`PaywallSheet.tsx`.
 
 ## 🟡 Minor notes (no action required unless you care)
 

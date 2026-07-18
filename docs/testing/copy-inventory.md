@@ -181,7 +181,7 @@ Generated 2026-07-18. One section per source file, one bullet per string, in sou
 - "⚡ +{formatDrops(dropsEarned)} drops · {formatDrops(newTotal)} total" — headline template
 - "Your bucket grew: {newTier.name}" — celebration message template
 - "FOCUS WINDOW OPEN" — focus card label
-- "You've got 1-2 hrs of enhanced focus. What do you want to use it for?" — focus card body
+- "Post-workout is prime focus time for a lot of ADHD brains. Want to point it at something?" — focus card body (revised 2026-07-18)
 - "Done" — button label
 
 ## components/BodyMetricsBanner.tsx
@@ -189,7 +189,7 @@ Generated 2026-07-18. One section per source file, one bullet per string, in sou
 
 ## components/PaywallSheet.tsx
 - "Your patterns are ready. Unlock them." — headline
-- "Flux Full includes complete insights, body metrics tracking, and 12 months of history." — body text
+- "Flux Full includes complete insights and body metrics tracking." — body text (revised 2026-07-18)
 - "$7.99/month or $54.99/year · 30-day free trial" — price text
 - "Start free trial" — button label
 - "Not now" — button label

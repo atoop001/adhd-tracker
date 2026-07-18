@@ -52,7 +52,8 @@ export default function PostWorkoutNudge({ dropResult, onDone, reduceMotion }: P
       <View style={styles.focusCard}>
         <Text style={styles.focusLabel}>FOCUS WINDOW OPEN</Text>
         <Text style={styles.focusBody}>
-          You've got 1-2 hrs of enhanced focus. What do you want to use it for?
+          Post-workout is prime focus time for a lot of ADHD brains. Want to point
+          it at something?
         </Text>
       </View>
 

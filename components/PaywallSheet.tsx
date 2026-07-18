@@ -28,8 +28,7 @@ export default function PaywallSheet({ visible, onClose, onUnlock }: PaywallShee
         <View style={styles.sheet}>
           <Text style={styles.headline}>Your patterns are ready. Unlock them.</Text>
           <Text style={styles.body}>
-            Flux Full includes complete insights, body metrics tracking, and 12 months
-            of history.
+            Flux Full includes complete insights and body metrics tracking.
           </Text>
           <Text style={styles.price}>
             $7.99/month or $54.99/year · 30-day free trial

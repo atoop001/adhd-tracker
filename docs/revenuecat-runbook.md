@@ -26,8 +26,8 @@ Product ids (keep these exact ids so dashboards and code agree):
 - `flux_full_monthly` — auto-renewing subscription, $7.99/month, 30-day free trial
 - `flux_full_annual` — auto-renewing subscription, $54.99/year, 30-day free trial
 
-⚠️ Prices/trial pending sign-off — see flag 2 in `docs/testing/copy-audit.md`,
-including whether "12 months of history" stays in the paywall copy.
+Prices and trial approved by user 2026-07-18. Decision of record: **no history
+limits on any tier** — the paywall copy no longer mentions history.
 
 Create these in Play Console (Monetize → Subscriptions; trial = "free offer"
 phase) and App Store Connect (Subscriptions, one subscription group,
@@ -88,6 +88,5 @@ introductory offer = 30-day free trial).
 
 - Hide the Settings DEV section behind `__DEV__`.
 - Confirm the paywall never blocks the core loop (brief: check-in, logging,
-  bucket are free forever — only insights depth, body metrics, history are
-  gated).
+  bucket are free forever — only insights depth and body metrics are gated).
 - Re-run the copy audit on final paywall strings.
