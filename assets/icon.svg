@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="drop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#C084FC"/>
+      <stop offset="1" stop-color="#7B6EF6"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.55" r="0.5">
+      <stop offset="0" stop-color="#7B6EF6" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#7B6EF6" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="dropClip">
+      <path d="M512 168 C512 168 282 452 282 646 A230 230 0 0 0 742 646 C742 452 512 168 512 168 Z"/>
+    </clipPath>
+  </defs>
+
+  <rect width="1024" height="1024" fill="#0F0F14"/>
+  <circle cx="512" cy="560" r="400" fill="url(#glow)"/>
+
+  <path d="M512 168 C512 168 282 452 282 646 A230 230 0 0 0 742 646 C742 452 512 168 512 168 Z"
+        fill="url(#drop)"/>
+
+  <!-- fill line: the bucket-filling motif, a brighter band low in the drop -->
+  <g clip-path="url(#dropClip)">
+    <rect x="252" y="620" width="520" height="260" fill="#F0EFF8" opacity="0.16"/>
+    <rect x="252" y="620" width="520" height="14" fill="#F0EFF8" opacity="0.45"/>
+  </g>
+</svg>

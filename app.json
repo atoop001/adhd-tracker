@@ -6,12 +6,14 @@
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "scheme": "fluxapp",
+    "icon": "./assets/icon.png",
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.fluxapp.flux"
     },
     "android": {
       "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0F0F14"
       },
       "package": "com.fluxapp.flux"

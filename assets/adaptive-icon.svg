@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="drop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#C084FC"/>
+      <stop offset="1" stop-color="#7B6EF6"/>
+    </linearGradient>
+    <clipPath id="dropClip">
+      <path d="M512 290 C512 290 364 473 364 598 A148 148 0 0 0 660 598 C660 473 512 290 512 290 Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- transparent background; Android supplies the #0F0F14 backdrop.
+       Artwork stays inside the ~66% safe zone for round masks. -->
+  <path d="M512 290 C512 290 364 473 364 598 A148 148 0 0 0 660 598 C660 473 512 290 512 290 Z"
+        fill="url(#drop)"/>
+  <g clip-path="url(#dropClip)">
+    <rect x="344" y="580" width="336" height="180" fill="#F0EFF8" opacity="0.16"/>
+    <rect x="344" y="580" width="336" height="9" fill="#F0EFF8" opacity="0.45"/>
+  </g>
+</svg>
