@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "Flux",
-  "updated": "2026-07-15",
+  "updated": "2026-07-18",
   "milestones": [
     {
       "id": "M1",
@@ -32,8 +32,8 @@
       "title": "Post-test fixes and polish",
       "steps": [
         { "title": "Batch-fix issues from docs/testing/smoke-test-issues.md", "done": false },
-        { "title": "Polish backlog from .superpowers/sdd/progress.md", "done": false },
-        { "title": "expo-doctor cleanup: splash key, patch-version bumps", "done": false }
+        { "title": "Polish backlog from .superpowers/sdd/progress.md", "done": true },
+        { "title": "expo-doctor cleanup: splash key, patch-version bumps", "done": true }
       ]
     },
     {
